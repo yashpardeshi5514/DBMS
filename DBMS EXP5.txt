@@ -1,0 +1,65 @@
+CREATE DATABASE studt_db;
+USE studt_db;
+
+CREATE TABLE o_rollcall (
+  roll_no INT,
+  name VARCHAR(25),
+  division VARCHAR(5)  -- renamed from 'div' to avoid reserved keyword issues
+);
+
+CREATE TABLE n_rollcall (
+  roll_no INT,
+  name VARCHAR(25),
+  division VARCHAR(5)
+);
+
+INSERT INTO o_rollcall VALUES (11, 'ABHISHEK', 'A');
+INSERT INTO o_rollcall VALUES (12, 'SAKSHI', 'A');
+INSERT INTO o_rollcall VALUES (13, 'SANKET', 'B');
+INSERT INTO o_rollcall VALUES (14, 'MAYUR', 'A');
+INSERT INTO o_rollcall VALUES (15, 'ROHAN', 'B');
+INSERT INTO o_rollcall VALUES (16, 'SANJU', 'B');
+-- Add duplicates to test
+INSERT INTO o_rollcall VALUES (13, 'SANKET', 'B');
+INSERT INTO o_rollcall VALUES (14, 'MAYUR', 'A');
+
+DELIMITER //
+
+CREATE PROCEDURE cursor_imp()
+BEGIN
+  DECLARE done INT DEFAULT FALSE;
+  DECLARE r_no INT;
+  DECLARE r_name VARCHAR(25);
+  DECLARE r_div VARCHAR(5);
+
+  DECLARE cur CURSOR FOR
+    SELECT roll_no, name, division
+    FROM o_rollcall
+    GROUP BY roll_no, name, division
+    HAVING COUNT(*) > 1;
+
+  DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+
+  -- Clear and refill n_rollcall
+  DELETE FROM n_rollcall;
+  INSERT INTO n_rollcall SELECT * FROM o_rollcall;
+
+  -- Process duplicates
+  OPEN cur;
+  read_loop: LOOP
+    FETCH cur INTO r_no, r_name, r_div;
+    IF done THEN
+      LEAVE read_loop;
+    END IF;
+
+    DELETE FROM n_rollcall
+    WHERE roll_no = r_no AND name = r_name AND division = r_div;
+
+    INSERT INTO n_rollcall VALUES (r_no, r_name, r_div);
+  END LOOP;
+  CLOSE cur;
+END;
+//
+
+DELIMITER ;
+
