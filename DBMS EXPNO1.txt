@@ -1,0 +1,132 @@
+-- 1️⃣ Create and use a database
+CREATE DATABASE demo_db;
+USE demo_db;
+
+-- 2️⃣ Create tables
+CREATE TABLE users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(100),
+  age INT,
+  email VARCHAR(150),
+  signup_date DATE,
+  is_active BOOLEAN DEFAULT TRUE
+);
+
+CREATE TABLE alumni (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(100),
+  email VARCHAR(150)
+);
+
+CREATE TABLE posts (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT,
+  title VARCHAR(200),
+  content TEXT,
+  FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- 3️⃣ Insert data into users
+INSERT INTO users (name, age, email, signup_date) 
+VALUES ('Norah', 20, 'norah@example.com', '2025-11-01');
+
+INSERT INTO users (name, age, email, signup_date)
+VALUES 
+  ('Asha', 22, 'asha@example.com', '2025-10-12'),
+  ('Sam', 25, 'sam@example.net', '2025-09-02'),
+  ('Rahul', 27, 'rahul@uni.edu', '2024-12-22');
+
+-- 4️⃣ Insert data into alumni
+INSERT INTO alumni (name, email)
+VALUES 
+  ('Sam', 'sam@example.net'),
+  ('Rahul', 'rahul@uni.edu'),
+  ('Tina', 'tina@alumni.edu');
+
+-- 5️⃣ Insert posts
+INSERT INTO posts (user_id, title, content)
+VALUES 
+  (1, 'Mindful Living', 'Tips on mindfulness'),
+  (2, 'Eco Goals', 'My journey into sustainability'),
+  (3, 'Travel Diary', 'Exploring hidden spots');
+
+-- 6️⃣ SELECT Queries
+-- All users
+SELECT * FROM users;
+
+-- Selecting with conditions and operators
+SELECT name, age, email
+FROM users
+WHERE age >= 22 AND is_active = TRUE
+ORDER BY signup_date DESC;
+
+-- Using functions
+SELECT name, UPPER(email) AS capitalized_email, YEAR(signup_date) AS signup_year
+FROM users
+WHERE LOWER(name) LIKE 'n%';
+
+-- Aggregate functions
+SELECT COUNT(*) AS total_users, AVG(age) AS avg_age FROM users;
+
+-- Grouping
+SELECT YEAR(signup_date) AS signup_year, COUNT(*) AS users_joined
+FROM users
+GROUP BY YEAR(signup_date)
+HAVING COUNT(*) > 0;
+
+-- 7️⃣ UPDATE Queries
+-- Update a single row
+UPDATE users
+SET age = age + 1
+WHERE name = 'Norah';
+
+-- Deactivate users signed up before 2025
+UPDATE users
+SET is_active = FALSE
+WHERE signup_date < '2025-01-01';
+
+-- Check result
+SELECT * FROM users;
+
+-- 8️⃣ DELETE Queries
+-- Delete inactive users
+DELETE FROM users WHERE is_active = FALSE;
+
+-- Check remaining
+SELECT * FROM users;
+
+-- 9️⃣ JOIN Example
+SELECT u.name, p.title
+FROM users u
+JOIN posts p ON u.id = p.user_id;
+
+-- LEFT JOIN (shows all users even if they have no posts)
+SELECT u.name, p.title
+FROM users u
+LEFT JOIN posts p ON u.id = p.user_id;
+
+-- 10️⃣ SET Operators (UNION, UNION ALL)
+SELECT name, email FROM users
+UNION
+SELECT name, email FROM alumni;
+
+SELECT name, email FROM users
+UNION ALL
+SELECT name, email FROM alumni;
+
+-- 11️⃣ Transaction Example
+START TRANSACTION;
+
+UPDATE users SET age = age + 1 WHERE id = 1;
+DELETE FROM posts WHERE id = 99; -- this won't match anything, but it's safe
+
+-- if everything seems fine
+COMMIT;
+
+-- if something goes wrong, you can roll back
+-- ROLLBACK;
+
+-- 12️⃣ Final check
+SELECT * FROM users;
+SELECT * FROM posts;
+SELECT * FROM alumni;
