@@ -1,0 +1,59 @@
+CREATE DATABASE library;
+USE library;
+CREATE TABLE Borrower (
+  roll_no INT PRIMARY KEY,
+  issuer_name VARCHAR(255),
+  issue_date DATE,
+  book_name VARCHAR(255),
+  status CHAR(1)
+);
+
+CREATE TABLE Fine (
+  roll_no INT,
+  return_date DATE,
+  amt INT,
+  FOREIGN KEY (roll_no) REFERENCES Borrower (roll_no)
+);
+INSERT INTO Borrower VALUES (1, 'Kalas', '2024-10-19', 'DBMS', 'I');
+INSERT INTO Borrower VALUES (2, 'Himanshu', '2024-10-01', 'TOC', 'I');
+INSERT INTO Borrower VALUES (3, 'MEPA', '2024-10-25', 'IoT', 'I');
+INSERT INTO Borrower VALUES (4, 'Kshitij', '2024-10-29', '1984', 'I');
+SELECT * FROM Borrower;
+DELIMITER //
+
+CREATE PROCEDURE CalculateFine(IN p_roll INT, IN p_book VARCHAR(255))
+BEGIN
+    DECLARE p_issueDate DATE;
+    DECLARE totalDays INT;
+    DECLARE fineAmt INT DEFAULT 0;
+
+    SELECT issue_date INTO p_issueDate 
+    FROM Borrower 
+    WHERE roll_no = p_roll AND book_name = p_book;
+
+    SET totalDays = DATEDIFF(CURDATE(), p_issueDate);
+
+    IF totalDays > 30 THEN
+        SET fineAmt = totalDays * 50;
+    ELSEIF totalDays BETWEEN 15 AND 30 THEN
+        SET fineAmt = totalDays * 5;
+    ELSE
+        SET fineAmt = 0;
+    END IF;
+
+    IF fineAmt > 0 THEN
+        INSERT INTO Fine VALUES (p_roll, CURDATE(), fineAmt);
+        SELECT CONCAT('Roll no. ', p_roll, ' has been fined Rs. ', fineAmt, ' for being ', totalDays, ' days late.') AS Message;
+    ELSE
+        SELECT CONCAT('Roll no. ', p_roll, ' does not have to pay any fine.') AS Message;
+    END IF;
+
+    UPDATE Borrower 
+    SET status = 'R' 
+    WHERE roll_no = p_roll AND book_name = p_book;
+END;
+//
+
+DELIMITER ;
+CALL CalculateFine(1, 'DBMS');
+SELECT * FROM Fine;
